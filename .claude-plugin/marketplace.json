@@ -1,0 +1,14 @@
+{
+  "name": "lunartec",
+  "owner": { "name": "Gareth Parker", "url": "https://github.com/lunartec" },
+  "description": "Lunartec's agent skills, as an installable Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "lunar-skills",
+      "source": "./",
+      "description": "chaos-storm, signal-noise and devils-advocate: lean, script-backed skills that route work to the right model.",
+      "category": "engineering",
+      "keywords": ["engineering", "code-health", "code-review", "focus"]
+    }
+  ]
+}

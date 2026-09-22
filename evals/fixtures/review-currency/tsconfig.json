@@ -1,0 +1,4 @@
+{
+  // shared config
+  "compilerOptions": { "baseUrl": ".", "paths": { "@utils/*": ["packages/utils/src/*"] } }
+}

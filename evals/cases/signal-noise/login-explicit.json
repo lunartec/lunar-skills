@@ -1,0 +1,25 @@
+{
+  "id": "sn-login-explicit",
+  "skill": "signal-noise",
+  "description": "Explicit invocation on a 14-step plan: critical path must be signal, research/slides/logo must not.",
+  "fixture": "plan-login",
+  "prompt": {
+    "claude": "/signal-noise PLAN.md. Stop after the noise handoff (step 5): do not execute any plan items.",
+    "codex": "$signal-noise PLAN.md. Stop after the noise handoff (step 5): do not execute any plan items."
+  },
+  "timeoutSec": 600,
+  "assert": [
+    { "type": "sn.ledger" },
+    { "type": "sn.signalCount", "min": 3, "max": 5 },
+    { "type": "sn.signal", "match": "token|migration|table" },
+    { "type": "sn.signal", "match": "verif|session" },
+    { "type": "sn.signal", "match": "magic-link|magic link|POST|email" },
+    { "type": "sn.notSignal", "match": "competitor|comparison" },
+    { "type": "sn.notSignal", "match": "slides|product sync" },
+    { "type": "sn.notSignal", "match": "logo|dark-mode|dark mode" },
+    { "type": "sn.notSignal", "match": "plugin|Grafana|refactor" },
+    { "type": "sn.handoff" },
+    { "type": "sn.quickPass", "min": 1, "soft": true },
+    { "type": "maxCostUSD", "value": 1.0, "soft": true }
+  ]
+}

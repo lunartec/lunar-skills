@@ -1,0 +1,14 @@
+{
+  "name": "lunar-skills",
+  "version": "0.1.0",
+  "description": "Lean, script-backed engineering skills: chaos-storm (random-sample codebase health), signal-noise (focus on the 3-5 things that matter), devils-advocate (argue the other side before you merge).",
+  "author": { "name": "Gareth Parker", "url": "https://github.com/lunartec" },
+  "repository": "https://github.com/lunartec/lunar-skills",
+  "license": "MIT",
+  "keywords": ["engineering", "skills", "code-health", "code-review", "focus", "subagents"],
+  "skills": [
+    "./skills/engineering/chaos-storm",
+    "./skills/engineering/devils-advocate",
+    "./skills/productivity/signal-noise"
+  ]
+}

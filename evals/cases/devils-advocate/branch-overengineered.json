@@ -1,0 +1,21 @@
+{
+  "id": "da-branch-overengineered",
+  "skill": "devils-advocate",
+  "description": "A branch adds an interface + factory + registry for one currency, duplicating formatGBP. The advocate must call out duplication and over-engineering.",
+  "fixture": "mono",
+  "branch": { "name": "feature/currency-formatter", "overlay": "currency-formatter", "message": "Add extensible currency formatter factory" },
+  "prompt": {
+    "claude": "/devils-advocate feature/currency-formatter",
+    "codex": "$devils-advocate feature/currency-formatter"
+  },
+  "timeoutSec": 900,
+  "assert": [
+    { "type": "file", "glob": ".devils-advocate/*/brief.json" },
+    { "type": "da.report" },
+    { "type": "da.verdict", "oneOf": ["adjust", "rethink"] },
+    { "type": "da.lens", "lens": "duplication", "evidence": "money\\.ts|formatGBP" },
+    { "type": "da.lens", "lens": "overengineering" },
+    { "type": "delegated", "soft": true },
+    { "type": "maxCostUSD", "value": 2.0, "soft": true }
+  ]
+}

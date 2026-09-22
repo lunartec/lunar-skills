@@ -1,0 +1,20 @@
+{
+  "id": "da-review-rubber-stamp",
+  "skill": "devils-advocate",
+  "description": "Commentary target: an approving review of the over-engineered branch. The advocate should find what the review took on trust.",
+  "fixture": "review-currency",
+  "branch": { "name": "feature/currency-formatter", "overlay": "currency-formatter", "message": "Add extensible currency formatter factory" },
+  "prompt": {
+    "claude": "Another agent approved feature/currency-formatter; its review is in REVIEW.md. Before I merge, play devil's advocate on that review.",
+    "codex": "Another agent approved feature/currency-formatter; its review is in REVIEW.md. Before I merge, $devils-advocate that review."
+  },
+  "timeoutSec": 900,
+  "assert": [
+    { "type": "skillInvoked", "name": "devils-advocate" },
+    { "type": "da.report" },
+    { "type": "da.verdict", "oneOf": ["adjust", "rethink"] },
+    { "type": "da.lens", "lens": "review-gap" },
+    { "type": "da.lens", "lens": "duplication", "evidence": "money\\.ts|formatGBP", "soft": true },
+    { "type": "maxCostUSD", "value": 2.0, "soft": true }
+  ]
+}

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Chaos Storm"
+  short_description: "Random-sample codebase health check"
+policy:
+  allow_implicit_invocation: false

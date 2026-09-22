@@ -1,0 +1,9 @@
+node_modules/
+reports/results/
+reports/transcripts/
+reports/history.json
+reports/test-report.html
+.chaos-storm/
+.signal-noise/
+.devils-advocate/
+.DS_Store

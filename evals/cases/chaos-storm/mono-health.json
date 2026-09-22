@@ -1,0 +1,29 @@
+{
+  "id": "chaos-mono-health",
+  "skill": "chaos-storm",
+  "description": "Configured monorepo: the grab-bag util and the kitchen-sink router must surface; clean utils must not.",
+  "fixture": "mono",
+  "setup": [
+    ["chaos-storm", "map"],
+    ["chaos-storm", "configure", "--include", "apps/*,packages/*,tools", "--ext", ".ts,.tsx,.py,.sh", "--sample", "5"]
+  ],
+  "prompt": {
+    "claude": "/chaos-storm",
+    "codex": "$chaos-storm run a chaos storm on this repo."
+  },
+  "timeoutSec": 900,
+  "assert": [
+    { "type": "file", "glob": ".chaos-storm/runs/*/report.json" },
+    { "type": "file", "glob": ".chaos-storm/runs/*/report.md" },
+    { "type": "chaos.areas", "min": 4 },
+    { "type": "chaos.flagged", "path": "packages/utils/src/mega.ts" },
+    { "type": "chaos.concern", "path": "packages/utils/src/mega.ts" },
+    { "type": "chaos.flagged", "path": "apps/web/src/router.ts" },
+    { "type": "chaos.notFlagged", "path": "packages/utils/src/slugify.ts" },
+    { "type": "chaos.notFlagged", "path": "packages/utils/src/money.ts" },
+    { "type": "chaos.escalated" },
+    { "type": "orchestratorDidNotRead", "paths": ["packages/utils/src/mega.ts", "apps/web/src/router.ts", "packages/utils/src/slugify.ts"] },
+    { "type": "delegated", "soft": true },
+    { "type": "maxCostUSD", "value": 2.0, "soft": true }
+  ]
+}

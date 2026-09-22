@@ -1,0 +1,22 @@
+{
+  "id": "sn-release-orchestration",
+  "skill": "signal-noise",
+  "description": "Orchestration mode: of 11 subagents, the release-blocking ones are signal; marketing and hygiene agents are noise or cut.",
+  "fixture": "plan-release",
+  "prompt": {
+    "claude": "/signal-noise ORCHESTRATION.md (mode: orchestration). Stop after the noise handoff (step 5): do not run the orchestration.",
+    "codex": "$signal-noise ORCHESTRATION.md (mode: orchestration). Stop after the noise handoff (step 5): do not run the orchestration."
+  },
+  "timeoutSec": 600,
+  "assert": [
+    { "type": "sn.ledger" },
+    { "type": "sn.signalCount", "min": 3, "max": 5 },
+    { "type": "sn.signal", "match": "CI|failing test" },
+    { "type": "sn.signal", "match": "publish" },
+    { "type": "sn.notSignal", "match": "blog|social|thread" },
+    { "type": "sn.notSignal", "match": "theme|bench|competitor" },
+    { "type": "sn.notSignal", "match": "triage|dev dependencies|naming" },
+    { "type": "sn.handoff" },
+    { "type": "maxCostUSD", "value": 1.0, "soft": true }
+  ]
+}

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>lunar-skills test report</title>
+<style>
+:root{color-scheme:light;--bg:#f6f6f4;--surface:#fcfcfb;--line:#e4e3de;--text:#0b0b0b;--text2:#52514e;--muted:#7a7974;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--ok:#0f7a3d;--okbg:#e3f4ea;--bad:#b42318;--badbg:#fde8e7;--warn:#8a5a00;--warnbg:#fdf1d8;--code:#f0efeb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#121211;--surface:#1a1a19;--line:#2e2d2a;--text:#fff;--text2:#c3c2b7;--muted:#8f8e86;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--ok:#5fd08f;--okbg:#15301f;--bad:#ff8a80;--badbg:#3a1714;--warn:#f2c14e;--warnbg:#33290f;--code:#232321}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#121211;--surface:#1a1a19;--line:#2e2d2a;--text:#fff;--text2:#c3c2b7;--muted:#8f8e86;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--ok:#5fd08f;--okbg:#15301f;--bad:#ff8a80;--badbg:#3a1714;--warn:#f2c14e;--warnbg:#33290f;--code:#232321}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:28px;margin:0 0 4px;letter-spacing:-.01em}h2{font-size:19px;margin:0 0 4px}h3{font-size:16px;margin:0}
+.lede{color:var(--text2);margin:0 0 16px;max-width:75ch}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+section{margin-top:40px}
+.env{color:var(--muted);font-size:13px;margin-bottom:24px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.tile-label{color:var(--text2);font-size:13px}.tile-value{font-size:30px;font-weight:650;font-variant-numeric:tabular-nums;margin:2px 0}.tile-sub{font-size:13px;color:var(--text2)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.badge.ok{color:var(--ok);background:var(--okbg)}.badge.bad{color:var(--bad);background:var(--badbg)}.badge.warn{color:var(--warn);background:var(--warnbg)}.badge.muted{color:var(--muted);background:var(--code)}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--text2);font-weight:600;font-size:13px}.num{text-align:right;font-variant-numeric:tabular-nums}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px}summary{cursor:pointer}
+pre{white-space:pre-wrap;word-break:break-word;margin:6px 0 0}pre.err{color:var(--bad);background:var(--badbg);padding:8px;border-radius:6px;font-size:12px}pre.cmd,pre.final{background:var(--code);padding:10px 12px;border-radius:8px;font-size:13px}
+.bars{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.bar-row{display:grid;grid-template-columns:minmax(140px,240px) 1fr auto;gap:12px;align-items:center;padding:5px 0}
+.bar-track{position:relative;height:12px}.bar{height:12px;background:var(--s1);border-radius:0 4px 4px 0}.bar.over{background:var(--bad)}
+.bar-limit{position:absolute;top:-3px;width:2px;height:18px;background:var(--text2)}.bar-value{font-variant-numeric:tabular-nums;font-size:13px;min-width:110px;text-align:right}
+.cards{display:grid;gap:14px}.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.card header p{margin:2px 0 0;font-size:13px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}.metrics div{display:flex;flex-direction:column}.metrics .k{font-size:12px;color:var(--text2)}.metrics .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.sub-h{font-size:12px;color:var(--text2);margin-top:4px}
+.stack{display:flex;gap:2px;height:12px;margin:6px 0}.seg{border-radius:3px;min-width:3px}.s1{background:var(--s1)}.s2{background:var(--s2)}.s3{background:var(--s3)}.s4{background:var(--s4)}
+.stack-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;margin-bottom:8px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.sparks{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px}.spark{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}.spark-label{font-size:13px;color:var(--text2)}.spark-label strong{color:var(--text)}
+.spark-line{fill:none;stroke:var(--s1);stroke-width:2}.spark-dot{fill:var(--s1)}.hit{fill:transparent}.hit:hover{fill:var(--s1);fill-opacity:.15}
+footer{margin-top:48px;color:var(--muted);font-size:13px}
+@media (max-width:640px){.bar-row{grid-template-columns:1fr;gap:4px}.bar-value{text-align:left}.tile-value{font-size:24px}}
+</style></head>
+<body><main>
+<h1>lunar-skills test report</h1>
+<div class="env">Run <span class="mono">2026-09-22T20-03-15</span> · commit <span class="mono">0ffd420</span> · Node v22.22.2 · claude 2.1.280 (Claude Code) · codex not installed</div>
+<div class="tiles"><div class="tile"><div class="tile-label">Deterministic tests</div><div class="tile-value">39<span class="muted">/39</span></div><div class="tile-sub"><span class="badge ok">✓ pass</span> 0 failing</div></div><div class="tile"><div class="tile-label">Live evals</div><div class="tile-value">6<span class="muted">/6</span></div><div class="tile-sub"><span class="badge ok">✓ pass</span> 0 not passing</div></div><div class="tile"><div class="tile-label">Live cost</div><div class="tile-value">$2.704</div><div class="tile-sub">$0.451 per run</div></div><div class="tile"><div class="tile-label">Delegated share</div><div class="tile-value">30%</div><div class="tile-sub">avg tokens spent in subagents</div></div><div class="tile"><div class="tile-label">Fast-tier share</div><div class="tile-value">13%</div><div class="tile-sub">avg tokens on the cheapest model</div></div><div class="tile"><div class="tile-label">Prompt budgets</div><div class="tile-value">3<span class="muted">/3</span></div><div class="tile-sub"><span class="badge ok">✓ pass</span> all skills lean</div></div></div>
+<section><h2>Live evals</h2><p class="lede">Real agent runs on fixture repos with the skill installed. Soft assertions warn without failing. Delegated share is the fraction of tokens spent inside subagents rather than the orchestrator; fast-tier share is the fraction processed by the cheapest model class. Both show whether the main agent kept its own context for what matters.</p><div class="cards"><article class="card">
+      <header><div><h3>chaos-mono-health <span class="muted">· claude</span></h3><p class="muted">Configured monorepo: the grab-bag util and the kitchen-sink router must surface; clean utils must not.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.806</span></div>
+        <div><span class="k">Time</span><span class="v">78s</span></div>
+        <div><span class="k">Turns</span><span class="v">15</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">1.70M / 16.9k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">14</span></div>
+        <div><span class="k">Delegated share</span><span class="v">65%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">0%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:1715072" title="claude-sonnet-5: 1.70M in, 16.9k out, $0.806"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">100%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>file exists: .chaos-storm/runs/*/report.json</td><td><span class="badge ok">✓ pass</span></td><td class="muted">1 match</td></tr><tr><td>file exists: .chaos-storm/runs/*/report.md</td><td><span class="badge ok">✓ pass</span></td><td class="muted">1 match</td></tr><tr><td>at least 4 areas graded</td><td><span class="badge ok">✓ pass</span></td><td class="muted">5 areas graded: apps/api A, apps/web C, packages/ui A, packages/utils C, tools B</td></tr><tr><td>flags packages/utils/src/mega.ts</td><td><span class="badge ok">✓ pass</span></td><td class="muted">concern, score 1 [P1 A1 F1 R1]</td></tr><tr><td>packages/utils/src/mega.ts survives escalation as a concern</td><td><span class="badge ok">✓ pass</span></td><td class="muted">concern, score 1 [P1 A1 F1 R1]</td></tr><tr><td>flags apps/web/src/router.ts</td><td><span class="badge ok">✓ pass</span></td><td class="muted">concern, score 1.5 [P2 A1 F1 R2]</td></tr><tr><td>does not flag packages/utils/src/slugify.ts</td><td><span class="badge ok">✓ pass</span></td><td class="muted">ok, score 5 [P5 A5 F5 R5]</td></tr><tr><td>does not flag packages/utils/src/money.ts</td><td><span class="badge ok">✓ pass</span></td><td class="muted">ok, score 5 [P5 A5 F5 R5]</td></tr><tr><td>escalation ran on flagged files</td><td><span class="badge ok">✓ pass</span></td><td class="muted">2 files escalated</td></tr><tr><td>orchestrator never read sampled sources</td><td><span class="badge ok">✓ pass</span></td><td class="muted">main agent read no sampled sources</td></tr><tr><td>work delegated to subagents</td><td><span class="badge ok">✓ pass</span></td><td class="muted">7 subagents; models used: claude-sonnet-5</td></tr><tr><td>cost under $2</td><td><span class="badge ok">✓ pass</span></td><td class="muted">$0.806 (limit $2)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">## Chaos Storm results — run `2026-09-22T20-03-24`
+
+**Overall grade: B (4.06)**
+
+| Area | Grade |
+|---|---|
+| apps/api | A (5) |
+| apps/web | C (3.25) |
+| packages/ui | A (5) |
+| packages/utils | C (3.67) |
+| tools | B (4) |
+
+**2 concerns**, both tracing to the same root cause:
+
+- **`packages/utils/src/mega.ts`** — a single `doStuff` function multiplexes six unrelated behaviors (caching, file I/O, string reversal, an artificial delay, email validation, tax calc) via a mode string, backed by mutable module state and `globalThis` mutation. **Action:** split into separate typed functions (cache, JSON reader, string util, delay helper, email validator, tax calculator); drop the global/module-level state.
+- **`apps/web/src/router.ts`** — calls into `mega.ts`&#39;s mode dispatch and pokes `globalThi</pre></details>
+    </article><article class="card">
+      <header><div><h3>da-branch-overengineered <span class="muted">· claude</span></h3><p class="muted">A branch adds an interface + factory + registry for one currency, duplicating formatGBP. The advocate must call out duplication and over-engineering.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.495</span></div>
+        <div><span class="k">Time</span><span class="v">78s</span></div>
+        <div><span class="k">Turns</span><span class="v">8</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">574.1k / 7.4k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">7</span></div>
+        <div><span class="k">Delegated share</span><span class="v">24%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">0%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:409002" title="claude-sonnet-5: 405.9k in, 3.1k out, $0.189"></div><div class="seg s2" style="flex:172577" title="claude-opus-5-5: 168.2k in, 4.4k out, $0.307"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">70%</span></span><span><i class="dot s2"></i>claude-opus-5-5 <span class="muted">30%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>file exists: .devils-advocate/*/brief.json</td><td><span class="badge ok">✓ pass</span></td><td class="muted">1 match</td></tr><tr><td>challenge rendered to report.md (max 5)</td><td><span class="badge ok">✓ pass</span></td><td class="muted">report.md written, 5 challenges, verdict rethink</td></tr><tr><td>verdict is adjust or rethink</td><td><span class="badge ok">✓ pass</span></td><td class="muted">verdict rethink</td></tr><tr><td>raises duplication citing /money\.ts|formatGBP/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">high/med: formatGBP was not replaced; the branch adds a second GBP formatter beside it, so the repo now has two implementations that disagree.</td></tr><tr><td>raises overengineering</td><td><span class="badge ok">✓ pass</span></td><td class="muted">high/med: An interface with one implementation, a factory with one product, a mutable static registry and an instance cache add about 45 lines to meet a need that one existing line already met.</td></tr><tr><td>work delegated to subagents</td><td><span class="badge ok">✓ pass</span></td><td class="muted">1 subagents; models used: claude-sonnet-5, claude-opus-5-5</td></tr><tr><td>cost under $2</td><td><span class="badge ok">✓ pass</span></td><td class="muted">$0.495 (limit $2)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">## Verdict: **RETHINK** (5 challenges)
+
+The branch replaces a one-line `formatGBP()` (Intl.NumberFormat wrapper) in checkout with a new interface + factory + registry + instance-cache subsystem, justified only by the commit message &quot;Add extensible currency formatter factory&quot; — no stated requirement for a second currency.
+
+**Top challenges:**
+
+1. **risk (high/high)** — The hand-rolled formatter diverges from the Intl-based one it replaces: negative amounts print as `£-1.50` instead of `-£1.50`, half-pence values round differently, and `NaN` renders as `£NaN.undefined`. All on a money-display path, with zero tests added. *Can checkout totals ever be negative (discounts, refunds), and who signed off on the display change with no tests?*
+
+2. **duplication (high/med)** — `formatGBP` wasn&#39;t remo</pre></details>
+    </article><article class="card">
+      <header><div><h3>da-review-rubber-stamp <span class="muted">· claude</span></h3><p class="muted">Commentary target: an approving review of the over-engineered branch. The advocate should find what the review took on trust.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.479</span></div>
+        <div><span class="k">Time</span><span class="v">100s</span></div>
+        <div><span class="k">Turns</span><span class="v">16</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">886.4k / 9.9k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">14</span></div>
+        <div><span class="k">Delegated share</span><span class="v">15%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">0%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:724143" title="claude-sonnet-5: 718.3k in, 5.8k out, $0.285"></div><div class="seg s2" style="flex:171277" title="claude-opus-5-5: 167.2k in, 4.1k out, $0.193"></div><div class="seg s3" style="flex:937" title="claude-haiku-4-5-20251001: 922 in, 15 out, $0.001"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">81%</span></span><span><i class="dot s2"></i>claude-opus-5-5 <span class="muted">19%</span></span><span><i class="dot s3"></i>claude-haiku-4-5-20251001 <span class="muted">0%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>skill &quot;devils-advocate&quot; triggered</td><td><span class="badge ok">✓ pass</span></td><td class="muted">Skill tool called</td></tr><tr><td>challenge rendered to report.md (max 5)</td><td><span class="badge ok">✓ pass</span></td><td class="muted">report.md written, 5 challenges, verdict rethink</td></tr><tr><td>verdict is adjust or rethink</td><td><span class="badge ok">✓ pass</span></td><td class="muted">verdict rethink</td></tr><tr><td>raises review-gap</td><td><span class="badge ok">✓ pass</span></td><td class="muted">high/med: The approval is a rubber stamp. It praises hypothetical future extensibility, accepts correctness on trust and defers tests on money-formatting code.</td></tr><tr><td>raises duplication citing /money\.ts|formatGBP/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">high/med: The branch re-implements a GBP formatter that already exists in the same package, and the new one is worse. formatGBP is now orphaned but still exported.</td></tr><tr><td>cost under $2</td><td><span class="badge ok">✓ pass</span></td><td class="muted">$0.479 (limit $2)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">The devil&#39;s advocate review came back **RETHINK** — this isn&#39;t a rubber-stamp-safe approval. Full report: `.devils-advocate/commentary-currency-formatter/report.md`
+
+**Top challenge (confirmed by testing):** the new `GbpCurrencyFormatter` renders negative amounts wrong — `£-5.00` instead of the correct `-£5.00`. I ran it: `format(-1234567)` → `£-12,345.67`, while the existing `formatGBP` (via `Intl.NumberFormat`) correctly gives `-£12,345.67`. If checkout can ever show a refund, credit, or negative line, this ships a customer-facing money bug, and the review said &quot;formatting logic looks correct&quot; without running it.
+
+Other findings:
+- **Duplication** — `packages/utils/src/money.ts` already had a correct `formatGBP` using `Intl.NumberFormat`. It&#39;s now orphaned (still exported, no callers) wh</pre></details>
+    </article><article class="card">
+      <header><div><h3>sn-login-explicit <span class="muted">· claude</span></h3><p class="muted">Explicit invocation on a 14-step plan: critical path must be signal, research/slides/logo must not.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.381</span></div>
+        <div><span class="k">Time</span><span class="v">168s</span></div>
+        <div><span class="k">Turns</span><span class="v">9</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">682.2k / 15.9k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">8</span></div>
+        <div><span class="k">Delegated share</span><span class="v">22%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">25%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:526556" title="claude-sonnet-5: 512.0k in, 14.6k out, $0.350"></div><div class="seg s3" style="flex:171558" title="claude-haiku-4-5-20251001: 170.2k in, 1.4k out, $0.031"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">75%</span></span><span><i class="dot s3"></i>claude-haiku-4-5-20251001 <span class="muted">25%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>ledger written</td><td><span class="badge ok">✓ pass</span></td><td class="muted">passwordless-login: 5S 5N 4C</td></tr><tr><td>signal count 3-5</td><td><span class="badge ok">✓ pass</span></td><td class="muted">5 signal</td></tr><tr><td>signal includes /token|migration|table/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">S1 Add a login_tokens table (migration) storing hashed token, user id, expiry</td></tr><tr><td>signal includes /verif|session/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">S3 Build GET /auth/verify that checks the token, expires it, creates a session</td></tr><tr><td>signal includes /magic-link|magic link|POST|email/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">S2 Build POST /auth/magic-link that creates a token and emails the link</td></tr><tr><td>signal excludes /competitor|comparison/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (C1)</td></tr><tr><td>signal excludes /slides|product sync/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N5)</td></tr><tr><td>signal excludes /logo|dark-mode|dark mode/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N1,C4)</td></tr><tr><td>signal excludes /plugin|Grafana|refactor/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (C2,C3,N3)</td></tr><tr><td>noise handoff written</td><td><span class="badge ok">✓ pass</span></td><td class="muted">handoff written</td></tr><tr><td>quick pass recorded 1+ verdicts</td><td><span class="badge ok">✓ pass</span></td><td class="muted">5 noise items have quick-pass verdicts</td></tr><tr><td>cost under $1</td><td><span class="badge ok">✓ pass</span></td><td class="muted">$0.381 (limit $1)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">The noise quick pass is done. Per the instructions I&#39;m stopping here (step 5) without executing any plan items.
+
+**Signal card for `passwordless-login`** — 5 signal, 5 noise (quick-passed), 4 cut:
+
+| | Item |
+|---|---|
+| S1 | Add `login_tokens` table migration |
+| S2 | Build `POST /auth/magic-link` |
+| S3 | Build `GET /auth/verify` |
+| S4 | Wire Postmark with secrets-manager API key |
+| S5 | Deploy to staging, hand QA the test account |
+
+**Cut** (not worth anyone&#39;s tokens): competitor research, plugin architecture for swappable email providers, UserService refactor, logo update.
+
+**Noise** (cheap subagent already gave quick-pass verdicts in `.signal-noise/passwordless-login.md`): dark-mode email template, the e2e test, Grafana funnel dashboard, OpenAPI docs, Friday slides.
+
+Ledger lives at</pre></details>
+    </article><article class="card">
+      <header><div><h3>sn-login-implicit <span class="muted">· claude</span></h3><p class="muted">Trigger test: the skill is not named. The description alone should make the agent reach for it.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.177</span></div>
+        <div><span class="k">Time</span><span class="v">46s</span></div>
+        <div><span class="k">Turns</span><span class="v">8</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">344.1k / 5.0k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">6</span></div>
+        <div><span class="k">Delegated share</span><span class="v">0%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">0%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:348118" title="claude-sonnet-5: 343.2k in, 5.0k out, $0.176"></div><div class="seg s3" style="flex:942" title="claude-haiku-4-5-20251001: 928 in, 14 out, $0.001"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">100%</span></span><span><i class="dot s3"></i>claude-haiku-4-5-20251001 <span class="muted">0%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>skill &quot;signal-noise&quot; triggered</td><td><span class="badge ok">✓ pass</span></td><td class="muted">Skill tool called</td></tr><tr><td>ledger written</td><td><span class="badge ok">✓ pass</span></td><td class="muted">magic-link: 5S 4N 4C</td></tr><tr><td>signal count 3-5</td><td><span class="badge ok">✓ pass</span></td><td class="muted">5 signal</td></tr><tr><td>signal excludes /competitor|slides|logo/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N4,C1,C4)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">**PLAN.md trimmed.** Original had 14 items; today&#39;s critical path is 5:
+
+1. `login_tokens` migration (hashed token, user id, expiry)
+2. `POST /auth/magic-link` — creates token, wires Postmark to send it
+3. `GET /auth/verify` — checks token, expires it, creates session
+4. E2E test: request → follow → logged in
+5. Deploy to staging, hand QA the test account
+
+These are the strict dependency chain to the goal — each blocks the next, and the e2e test is the one proof it actually works before handing to QA.
+
+**Parked for a quick pass later** (not blocking tonight): dark-mode email template, Grafana funnel dashboard, OpenAPI docs, Friday slides.
+
+**Cut outright** (no bearing on this goal, one even adds risk): competitor login research, email-provider plugin architecture, `UserService` refactor, l</pre></details>
+    </article><article class="card">
+      <header><div><h3>sn-release-orchestration <span class="muted">· claude</span></h3><p class="muted">Orchestration mode: of 11 subagents, the release-blocking ones are signal; marketing and hygiene agents are noise or cut.</p></div><span class="badge ok">✓ pass</span></header>
+      
+      <div class="metrics">
+        <div><span class="k">Cost</span><span class="v">$0.366</span></div>
+        <div><span class="k">Time</span><span class="v">125s</span></div>
+        <div><span class="k">Turns</span><span class="v">10</span></div>
+        <div><span class="k">Tokens in / out</span><span class="v">1.20M / 11.7k</span></div>
+        <div><span class="k">Orchestrator tool calls</span><span class="v">9</span></div>
+        <div><span class="k">Delegated share</span><span class="v">54%</span></div>
+        <div><span class="k">Fast-tier share</span><span class="v">55%</span></div>
+      </div>
+      <div class="sub-h">Tokens by model</div><div class="stack"><div class="seg s1" style="flex:541512" title="claude-sonnet-5: 535.7k in, 5.8k out, $0.251"></div><div class="seg s3" style="flex:673936" title="claude-haiku-4-5-20251001: 668.1k in, 5.9k out, $0.114"></div></div>
+    <div class="stack-legend"><span><i class="dot s1"></i>claude-sonnet-5 <span class="muted">45%</span></span><span><i class="dot s3"></i>claude-haiku-4-5-20251001 <span class="muted">55%</span></span></div>
+      <table><thead><tr><th>Assertion</th><th>Result</th><th>Detail</th></tr></thead><tbody><tr><td>ledger written</td><td><span class="badge ok">✓ pass</span></td><td class="muted">release-v2: 3S 6N 2C</td></tr><tr><td>signal count 3-5</td><td><span class="badge ok">✓ pass</span></td><td class="muted">3 signal</td></tr><tr><td>signal includes /CI|failing test/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">S1 agent-ci: fix the 3 failing CI tests on main</td></tr><tr><td>signal includes /publish/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">S3 agent-publish: run npm publish with provenance once CI is green</td></tr><tr><td>signal excludes /blog|social|thread/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N2,N3,N4)</td></tr><tr><td>signal excludes /theme|bench|competitor/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N2,N3,N5)</td></tr><tr><td>signal excludes /triage|dev dependencies|naming/</td><td><span class="badge ok">✓ pass</span></td><td class="muted">kept out of signal (N6,C1,C2)</td></tr><tr><td>noise handoff written</td><td><span class="badge ok">✓ pass</span></td><td class="muted">handoff written</td></tr><tr><td>cost under $1</td><td><span class="badge ok">✓ pass</span></td><td class="muted">$0.366 (limit $1)</td></tr></tbody></table>
+      <details><summary>Agent's final message</summary><pre class="final">Per the requested scope, I stopped after the noise handoff (step 5) and did not run the orchestration itself.
+
+**Signal (3, on the critical path):**
+- S1 agent-ci — fix the 3 failing CI tests on main
+- S2 agent-version — bump versions, generate CHANGELOG, tag
+- S3 agent-publish — `npm publish` with provenance
+
+**Noise (6)** — dispatched to a haiku subagent for a quick pass, which handed back verdicts for all 6: migration guide, blog post, and benchmarks marked `later` (with outlines/checklists drafted under `.signal-noise/release-v2.drafts/`); social thread, docs theme redesign, and issue triage marked `drop` for now.
+
+**Cut (2)** — type-naming audit and dev-dependency major upgrade, both scope creep/risk on a deadline day.
+
+Ledger: `.signal-noise/release-v2.json` / `.md`, handoff: `.signa</pre></details>
+    </article></div></section>
+<section><h2>Deterministic tests</h2><p class="lede">Script behaviour, schemas and repo conventions. Free to run, run on every change.</p><details ><summary><span class="mono">tests/chaos-storm.test.mjs</span> <span class="badge ok">✓ pass</span> <span class="muted">12/12</span></summary>
+      <table><thead><tr><th>Test</th><th>Result</th><th class="num">Time</th></tr></thead><tbody>
+      <tr><td>glob matching handles ** and basename patterns</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>map detects workspace apps, packages and loose tool dirs</td><td><span class="badge ok">✓ pass</span></td><td class="num">17ms</td></tr><tr><td>unknown top-level code dirs in a monorepo are flagged for the mapper subagent</td><td><span class="badge ok">✓ pass</span></td><td class="num">17ms</td></tr><tr><td>map is a no-op once map.json exists</td><td><span class="badge ok">✓ pass</span></td><td class="num">14ms</td></tr><tr><td>configure applies include globs, extensions and sample size</td><td><span class="badge ok">✓ pass</span></td><td class="num">13ms</td></tr><tr><td>select is deterministic for a seed and respects excludes, extensions and minLines</td><td><span class="badge ok">✓ pass</span></td><td class="num">37ms</td></tr><tr><td>select caps at sample size and prefers unseen files on the next run</td><td><span class="badge ok">✓ pass</span></td><td class="num">21ms</td></tr><tr><td>deps resolves relative, tsconfig paths, workspace packages and python imports</td><td><span class="badge ok">✓ pass</span></td><td class="num">21ms</td></tr><tr><td>scoring: flag rules and grades</td><td><span class="badge ok">✓ pass</span></td><td class="num">0ms</td></tr><tr><td>validateReview enforces the four-question contract</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>full pipeline with golden reviews: escalate, clear, concern, report</td><td><span class="badge ok">✓ pass</span></td><td class="num">23ms</td></tr><tr><td>CLI prints compact output (orchestrator context stays small)</td><td><span class="badge ok">✓ pass</span></td><td class="num">208ms</td></tr>
+      </tbody></table></details><details ><summary><span class="mono">tests/devils-advocate.test.mjs</span> <span class="badge ok">✓ pass</span> <span class="muted">6/6</span></summary>
+      <table><thead><tr><th>Test</th><th>Result</th><th class="num">Time</th></tr></thead><tbody>
+      <tr><td>resolves paths, PR numbers, ranges and branches</td><td><span class="badge ok">✓ pass</span></td><td class="num">258ms</td></tr><tr><td>parseDiff tracks new files, added line numbers and removals</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>branch brief surfaces duplication, abstraction density and new dirs</td><td><span class="badge ok">✓ pass</span></td><td class="num">236ms</td></tr><tr><td>brief text stays compact</td><td><span class="badge ok">✓ pass</span></td><td class="num">282ms</td></tr><tr><td>validateChallenge enforces evidence, steelman and honest verdicts</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>render writes a ranked report with the steelman and the question</td><td><span class="badge ok">✓ pass</span></td><td class="num">255ms</td></tr>
+      </tbody></table></details><details ><summary><span class="mono">tests/evals.test.mjs</span> <span class="badge ok">✓ pass</span> <span class="muted">7/7</span></summary>
+      <table><thead><tr><th>Test</th><th>Result</th><th class="num">Time</th></tr></thead><tbody>
+      <tr><td>every live case is well formed and points at real fixtures and skills</td><td><span class="badge ok">✓ pass</span></td><td class="num">2ms</td></tr><tr><td>workspace prep installs the skill for each agent, runs setup and builds branches</td><td><span class="badge ok">✓ pass</span></td><td class="num">409ms</td></tr><tr><td>graders: signal-noise ledger assertions</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>graders: soft failures warn, hard failures fail, n/a is neutral</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>orchestratorDidNotRead ignores script calls and subagent reads</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>codex transcripts: usage and commands are parsed</td><td><span class="badge ok">✓ pass</span></td><td class="num">0ms</td></tr><tr><td>HTML report renders with and without live results</td><td><span class="badge ok">✓ pass</span></td><td class="num">8ms</td></tr>
+      </tbody></table></details><details ><summary><span class="mono">tests/repo.test.mjs</span> <span class="badge ok">✓ pass</span> <span class="muted">6/6</span></summary>
+      <table><thead><tr><th>Test</th><th>Result</th><th class="num">Time</th></tr></thead><tbody>
+      <tr><td>every skill has valid frontmatter matching its folder</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>invocation mode is consistent between Claude Code and Codex metadata</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>plugin manifest, READMEs and docs list exactly the promoted skills</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>every file a SKILL.md links to exists</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>scripts are zero-dependency and executable</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>prompt budgets hold</td><td><span class="badge ok">✓ pass</span></td><td class="num">7ms</td></tr>
+      </tbody></table></details><details ><summary><span class="mono">tests/signal-noise.test.mjs</span> <span class="badge ok">✓ pass</span> <span class="muted">8/8</span></summary>
+      <table><thead><tr><th>Test</th><th>Result</th><th class="num">Time</th></tr></thead><tbody>
+      <tr><td>rejects more than five signal items</td><td><span class="badge ok">✓ pass</span></td><td class="num">1ms</td></tr><tr><td>rejects zero signal, missing reasons, bad classes and effort</td><td><span class="badge ok">✓ pass</span></td><td class="num">0ms</td></tr><tr><td>requires a real goal sentence</td><td><span class="badge ok">✓ pass</span></td><td class="num">0ms</td></tr><tr><td>warns when classification is too generous or plan too small</td><td><span class="badge ok">✓ pass</span></td><td class="num">0ms</td></tr><tr><td>ledger assigns ids, computes focus, writes md + handoff</td><td><span class="badge ok">✓ pass</span></td><td class="num">3ms</td></tr><tr><td>lifecycle: done, add, note, status</td><td><span class="badge ok">✓ pass</span></td><td class="num">3ms</td></tr><tr><td>CLI exits non-zero with actionable errors</td><td><span class="badge ok">✓ pass</span></td><td class="num">45ms</td></tr><tr><td>signal card stays small</td><td><span class="badge ok">✓ pass</span></td><td class="num">44ms</td></tr>
+      </tbody></table></details></section>
+<section><h2>Prompt budgets</h2><p class="lede">Estimated tokens each skill puts in context. SKILL.md is what the orchestrating agent carries; the other files are handed to subagents. The tick marks the budget.</p><div class="bars"><div class="bar-row" title="chaos-storm/SKILL.md: ~725 tokens, budget 1200">
+      <div class="bar-label"><span class="mono">chaos-storm/SKILL.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:60.4%"></div><div class="bar-limit" style="left:100.0%"></div></div>
+      <div class="bar-value">~725<span class="muted"> / 1200</span> </div></div><div class="bar-row" title="chaos-storm/mapper.md: ~155 tokens, budget 800">
+      <div class="bar-label"><span class="mono">chaos-storm/mapper.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:12.9%"></div><div class="bar-limit" style="left:66.7%"></div></div>
+      <div class="bar-value">~155<span class="muted"> / 800</span> </div></div><div class="bar-row" title="chaos-storm/reviewer.md: ~632 tokens, budget 800">
+      <div class="bar-label"><span class="mono">chaos-storm/reviewer.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:52.7%"></div><div class="bar-limit" style="left:66.7%"></div></div>
+      <div class="bar-value">~632<span class="muted"> / 800</span> </div></div><div class="bar-row" title="devils-advocate/SKILL.md: ~665 tokens, budget 1200">
+      <div class="bar-label"><span class="mono">devils-advocate/SKILL.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:55.4%"></div><div class="bar-limit" style="left:100.0%"></div></div>
+      <div class="bar-value">~665<span class="muted"> / 1200</span> </div></div><div class="bar-row" title="devils-advocate/advocate.md: ~727 tokens, budget 800">
+      <div class="bar-label"><span class="mono">devils-advocate/advocate.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:60.6%"></div><div class="bar-limit" style="left:66.7%"></div></div>
+      <div class="bar-value">~727<span class="muted"> / 800</span> </div></div><div class="bar-row" title="signal-noise/SKILL.md: ~848 tokens, budget 1200">
+      <div class="bar-label"><span class="mono">signal-noise/SKILL.md</span></div>
+      <div class="bar-track"><div class="bar " style="width:70.7%"></div><div class="bar-limit" style="left:100.0%"></div></div>
+      <div class="bar-value">~848<span class="muted"> / 1200</span> </div></div></div></section>
+<section><h2>History</h2><p class="lede">Last 3 runs. Use it to see whether a SKILL.md edit made things better, cheaper or leaner.</p>
+    <div class="sparks"><div class="spark"><div class="spark-label">Unit pass rate <strong>100%</strong></div>
+    <svg viewBox="0 0 240 48" width="100%" height="48" role="img" aria-label="Unit pass rate trend"><path d="M4.0,4.0 L236.0,4.0" class="spark-line"/>
+    <circle cx="4.0" cy="4.0" r="6" class="hit"><title>100%</title></circle><circle cx="236.0" cy="4.0" r="6" class="hit"><title>100%</title></circle>
+    <circle cx="236.0" cy="4.0" r="3" class="spark-dot"/></svg></div><div class="spark"><div class="spark-label">Live pass rate <strong>100%</strong></div>
+    <svg viewBox="0 0 240 48" width="100%" height="48" role="img" aria-label="Live pass rate trend"><path d="M120.0,4.0 L236.0,4.0" class="spark-line"/>
+    <circle cx="120.0" cy="4.0" r="6" class="hit"><title>100%</title></circle><circle cx="236.0" cy="4.0" r="6" class="hit"><title>100%</title></circle>
+    <circle cx="236.0" cy="4.0" r="3" class="spark-dot"/></svg></div><div class="spark"><div class="spark-label">Live cost per run <strong>$2.704</strong></div>
+    <svg viewBox="0 0 240 48" width="100%" height="48" role="img" aria-label="Live cost per run trend"><path d="M120.0,39.3 L236.0,4.0" class="spark-line"/>
+    <circle cx="120.0" cy="39.3" r="6" class="hit"><title>$0.315</title></circle><circle cx="236.0" cy="4.0" r="6" class="hit"><title>$2.704</title></circle>
+    <circle cx="236.0" cy="4.0" r="3" class="spark-dot"/></svg></div></div>
+    <table><thead><tr><th>Run</th><th>Commit</th><th class="num">Unit</th><th class="num">Live</th><th class="num">Cost</th><th class="num">SKILL.md tokens</th></tr></thead><tbody><tr><td class="mono">2026-09-22T20-03-15</td><td class="mono">0ffd420</td><td class="num">39/39</td><td class="num">6/6</td><td class="num">$2.704</td><td class="num">chaos-storm 725 · devils-advocate 665 · signal-noise 848</td></tr><tr><td class="mono">2026-09-22T20-01-33</td><td class="mono">0ffd420</td><td class="num">–/–</td><td class="num">1/1</td><td class="num">$0.315</td><td class="num">chaos-storm 725 · devils-advocate 665 · signal-noise 848</td></tr><tr><td class="mono">2026-09-22T19-56-27</td><td class="mono"></td><td class="num">20/20</td><td class="num">–</td><td class="num">–</td><td class="num">chaos-storm 725 · signal-noise 848</td></tr></tbody></table></section>
+<footer>Refine loop: edit a SKILL.md → <span class="mono">npm test</span> → <span class="mono">npm run eval:live -- --case &lt;id&gt; --repeat 3</span> → compare History. Raw results: <span class="mono">reports/results/2026-09-22T20-03-15.json</span>; transcripts: <span class="mono">reports/transcripts/2026-09-22T20-03-15/</span>.</footer>
+</main></body></html>

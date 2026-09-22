@@ -1,0 +1,17 @@
+{
+  "id": "sn-login-implicit",
+  "skill": "signal-noise",
+  "description": "Trigger test: the skill is not named. The description alone should make the agent reach for it.",
+  "fixture": "plan-login",
+  "prompt": {
+    "claude": "PLAN.md is sprawling and I only have today. What actually matters? Trim it to what makes real progress and park the rest. Don't start executing anything.",
+    "codex": "PLAN.md is sprawling and I only have today. What actually matters? Trim it to what makes real progress and park the rest. Don't start executing anything."
+  },
+  "timeoutSec": 600,
+  "assert": [
+    { "type": "skillInvoked", "name": "signal-noise" },
+    { "type": "sn.ledger" },
+    { "type": "sn.signalCount", "min": 3, "max": 5 },
+    { "type": "sn.notSignal", "match": "competitor|slides|logo" }
+  ]
+}
