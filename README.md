@@ -62,7 +62,7 @@ map (once) ─▶ grill: which areas, extensions, sample size ─▶ .chaos-stor
 select ─▶ 5 random files per area (seeded, prefers files never reviewed)
 review ─▶ one cheap subagent per area answers the four questions, writes JSON
 escalate ─▶ weak files are re-reviewed with their direct imports (one level)
-report ─▶ grade per area, concerns with an action for the human
+report ─▶ per file: a four-question table (score + assessment), import drill-downs, remedial actions
 ```
 
 The four questions for every file:
@@ -75,6 +75,25 @@ The four questions for every file:
 | Can it be reasoned with? | `reasoning` (understandable in isolation, self-contained) |
 
 A file is flagged when its mean drops below 3 or any score is 2 or lower. Flagged files get a second look with the files they import; many turn out to be sensible coordinators. What stays bad becomes a **concern** with a concrete action.
+
+The report (`.chaos-storm/runs/<id>/report.md`) is deliberately lean. For every file:
+
+```
+### `apps/web/src/router.ts` · 1.75 · CONCERN
+
+| Question | Score | Assessment |
+|---|:-:|---|
+| What is it trying to do? | 2 | Routes, tracks and flags. |
+| How is it doing it? | 2 | If-chain. |
+| What is it doing outside its purpose? | 1 | Analytics, flags, logging. |
+| Can it be reasoned with? | 2 | Random flags make it unpredictable. |
+
+Drilled into imports: `apps/web/src/checkout.ts` → still a concern (2.25 → 1.75)
+
+**Action:** Move analytics and flags out of the router.
+```
+
+It ends with a **Remedial actions** table, worst file first.
 
 ## signal-noise
 

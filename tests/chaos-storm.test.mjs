@@ -104,55 +104,67 @@ test('scoring: flag rules and grades', () => {
   assert.equal(cs.grade(1.5), 'E');
 });
 
+const A = (p, a, f, r) => ({ purpose: p, approach: a, focus: f, reasoning: r });
+const goodFile = (p) => ({ path: p, scores: { purpose: 5, approach: 4, focus: 5, reasoning: 4 }, assessment: A('Does one thing.', 'Simply.', 'Nothing extra.', 'Self-contained.') });
+
 test('validateReview enforces the four-question contract', () => {
-  const good = { area: 'x', files: [{ path: 'a.ts', purpose: 'p', how: 'h', outside: [], scores: { purpose: 5, approach: 4, focus: 5, reasoning: 4 } }] };
-  assert.deepEqual(cs.validateReview(good), []);
-  const bad = { area: 'x', files: [{ path: 'a.ts', purpose: 'p', scores: { purpose: 6, approach: 4, focus: 5 } }] };
+  assert.deepEqual(cs.validateReview({ area: 'x', files: [goodFile('a.ts')] }), []);
+  const bad = { area: 'x', files: [{ path: 'a.ts', scores: { purpose: 6, approach: 4, focus: 5 }, assessment: { purpose: 'p', approach: 'word '.repeat(30) } }] };
   const errs = cs.validateReview(bad).join('\n');
-  assert.match(errs, /"how"/);
-  assert.match(errs, /outside/);
   assert.match(errs, /scores.purpose/);
   assert.match(errs, /scores.reasoning/);
-  const esc = { ...good, files: [{ ...good.files[0], verdict: 'concern' }] };
-  assert.match(cs.validateReview(esc, { escalated: true }).join(), /action/);
+  assert.match(errs, /assessment.focus must answer "What is it doing outside its purpose\?"/);
+  assert.match(errs, /assessment.approach is 30 words/);
+  const flaggedNoAction = { area: 'x', files: [{ ...goodFile('a.ts'), scores: { purpose: 4, approach: 2, focus: 4, reasoning: 4 } }] };
+  assert.match(cs.validateReview(flaggedNoAction).join(), /needs an "action"/);
+  const esc = { area: 'x', files: [{ ...goodFile('a.ts'), verdict: 'concern' }] };
+  const e = cs.validateReview(esc, { escalated: true }).join();
+  assert.match(e, /action/);
+  assert.match(e, /deps/);
 });
 
-test('full pipeline with golden reviews: escalate, clear, concern, report', () => {
+test('full pipeline with golden reviews: escalate, clear, concern, lean report', () => {
   const dir = configured();
   const sel = cs.cmdSelect(dir, { seed: 'golden', run: 'g1', sample: '5' });
   const rdir = path.join(dir, '.chaos-storm/runs/g1/reviews');
   fs.mkdirSync(rdir, { recursive: true });
-  const good = (p) => ({ path: p, purpose: 'Does one thing.', how: 'Simply.', outside: [], scores: { purpose: 5, approach: 4, focus: 5, reasoning: 4 } });
   for (const a of sel.areas) {
     const files = a.files.map((f) => {
-      if (f.path.endsWith('mega.ts')) return { ...good(f.path), purpose: 'Unclear grab bag.', outside: ['caching', 'file IO', 'tax'], scores: { purpose: 1, approach: 2, focus: 1, reasoning: 1 } };
-      if (f.path.endsWith('router.ts')) return { ...good(f.path), outside: ['analytics', 'flags'], scores: { purpose: 3, approach: 2, focus: 2, reasoning: 2 } };
-      if (f.path.endsWith('checkout.ts')) return { ...good(f.path), scores: { purpose: 4, approach: 3, focus: 3, reasoning: 2 } };
-      return good(f.path);
+      if (f.path.endsWith('mega.ts')) return { path: f.path, scores: { purpose: 1, approach: 2, focus: 1, reasoning: 1 }, assessment: A('Unclear grab bag keyed on a mode string.', 'One function branching on mode.', 'Caching, file IO, tax, email checks.', 'Module-level mutable cache and counter.'), action: 'Split doStuff into one function per mode; delete the global cache.' };
+      if (f.path.endsWith('router.ts')) return { path: f.path, scores: { purpose: 3, approach: 2, focus: 2, reasoning: 2 }, assessment: A('Routes requests.', 'If-chain over paths.', 'Analytics, random feature flags.', 'Randomness and globals.'), action: 'Move analytics and flags out of the router.' };
+      if (f.path.endsWith('checkout.ts')) return { path: f.path, scores: { purpose: 4, approach: 3, focus: 3, reasoning: 2 }, assessment: A('Builds checkout view.', 'Reduce plus helpers.', 'Nothing extra.', 'Depends on imported helpers.'), action: 'Inline the summary helper.' };
+      return goodFile(f.path);
     });
     fs.writeFileSync(path.join(rdir, `${a.slug}.json`), JSON.stringify({ area: a.slug, files }));
   }
   assert.deepEqual(cs.cmdValidate(dir, 'g1'), {});
   const esc = cs.cmdEscalate(dir, 'g1');
-  const flagged = esc.items.map((i) => i.path).sort();
-  assert.deepEqual(flagged, ['apps/web/src/checkout.ts', 'apps/web/src/router.ts', 'packages/utils/src/mega.ts']);
+  assert.deepEqual(esc.items.map((i) => i.path).sort(), ['apps/web/src/checkout.ts', 'apps/web/src/router.ts', 'packages/utils/src/mega.ts']);
   assert.ok(esc.items.find((i) => i.path.endsWith('checkout.ts')).deps.includes('apps/web/src/summary.ts'));
   // checkout clears with context; router stays a concern; mega is left unescalated on purpose.
   fs.writeFileSync(path.join(rdir, 'apps-web.escalated.json'), JSON.stringify({ area: 'apps-web', files: [
-    { ...good('apps/web/src/checkout.ts'), deps: ['apps/web/src/summary.ts'], verdict: 'cleared' },
-    { ...good('apps/web/src/router.ts'), outside: ['analytics'], scores: { purpose: 2, approach: 2, focus: 1, reasoning: 2 }, deps: [], verdict: 'concern', action: 'Move analytics and flags out of the router.' },
+    { ...goodFile('apps/web/src/checkout.ts'), deps: ['apps/web/src/summary.ts'], verdict: 'cleared' },
+    { path: 'apps/web/src/router.ts', scores: { purpose: 2, approach: 2, focus: 1, reasoning: 2 }, assessment: A('Routes, tracks and flags.', 'If-chain.', 'Analytics, flags, logging.', 'Random flags make it unpredictable.'), deps: ['apps/web/src/checkout.ts'], verdict: 'concern', action: 'Move analytics and flags out of the router.' },
   ] }));
   assert.deepEqual(cs.cmdValidate(dir, 'g1'), {});
   const r = cs.cmdReport(dir, 'g1');
   const web = r.areas.find((a) => a.area === 'apps/web');
-  const st = Object.fromEntries(web.files.map((f) => [f.path, f.status]));
-  assert.equal(st['apps/web/src/checkout.ts'], 'cleared');
-  assert.equal(st['apps/web/src/router.ts'], 'concern');
+  const byPath = Object.fromEntries(web.files.map((f) => [f.path, f]));
+  assert.equal(byPath['apps/web/src/checkout.ts'].status, 'cleared');
+  assert.equal(byPath['apps/web/src/checkout.ts'].action, null, 'cleared files carry no action');
+  assert.equal(byPath['apps/web/src/router.ts'].status, 'concern');
+  assert.equal(byPath['apps/web/src/router.ts'].assessment.focus, 'Analytics, flags, logging.', 'report shows the post-escalation assessment');
   assert.equal(r.concerns.length, 2);
-  assert.ok(r.concerns.some((c) => c.status === 'flagged-unescalated' && c.path.endsWith('mega.ts')));
+  assert.deepEqual(r.actions.map((x) => x.path), ['packages/utils/src/mega.ts', 'apps/web/src/router.ts'], 'worst first');
   const md = fs.readFileSync(path.join(dir, '.chaos-storm/runs/g1/report.md'), 'utf8');
-  assert.match(md, /Concerns to action/);
-  assert.match(md, /Move analytics and flags out of the router/);
+  assert.match(md, /\| Question \| Score \| Assessment \|/);
+  assert.match(md, /\| What is it doing outside its purpose\? \| 1 \| Analytics, flags, logging. \|/);
+  assert.match(md, /Drilled into imports: `apps\/web\/src\/checkout.ts` → still a concern \(2.25 → 1.75\)/);
+  assert.match(md, /Drilled into imports: `apps\/web\/src\/summary.ts` → cleared \(3 → 4.5\)/);
+  assert.match(md, /mega.ts` · 1.25 · flagged[\s\S]*Flagged, not yet drilled into imports/);
+  assert.match(md, /## Remedial actions/);
+  assert.match(md, /\| 1 \| `packages\/utils\/src\/mega.ts` \| 1.25 \| flagged \| Split doStuff/);
+  assert.doesNotMatch(md, /\*\*Action:\*\* Inline the summary helper/, 'no action for cleared files');
 });
 
 test('CLI prints compact output (orchestrator context stays small)', () => {

@@ -377,7 +377,15 @@ export function isFlagged(f, t = { flagBelow: 3, dimensionFloor: 2 }) {
 }
 export function grade(score) { return score >= 4.5 ? 'A' : score >= 3.75 ? 'B' : score >= 3 ? 'C' : score >= 2.25 ? 'D' : 'E'; }
 
-export function validateReview(obj, { escalated = false } = {}) {
+export const QUESTIONS = {
+  purpose: 'What is it trying to do?',
+  approach: 'How is it doing it?',
+  focus: 'What is it doing outside its purpose?',
+  reasoning: 'Can it be reasoned with?',
+};
+const words = (x) => String(x || '').trim().split(/\s+/).filter(Boolean).length;
+
+export function validateReview(obj, { escalated = false, thresholds } = {}) {
   const errors = [];
   if (!obj || typeof obj !== 'object') return ['not a JSON object'];
   if (!obj.area) errors.push('missing "area"');
@@ -385,14 +393,19 @@ export function validateReview(obj, { escalated = false } = {}) {
   for (const [i, f] of (obj.files || []).entries()) {
     const at = `files[${i}]${f?.path ? ` (${f.path})` : ''}`;
     if (!f.path) errors.push(`${at}: missing path`);
-    for (const k of ['purpose', 'how']) if (!f[k] || typeof f[k] !== 'string') errors.push(`${at}: missing "${k}" sentence`);
-    if (!Array.isArray(f.outside)) errors.push(`${at}: "outside" must be an array (empty if nothing)`);
     for (const d of DIMENSIONS) {
       const v = f.scores?.[d];
       if (!Number.isInteger(v) || v < 1 || v > 5) errors.push(`${at}: scores.${d} must be an integer 1-5`);
+      const a = f.assessment?.[d];
+      if (!a || typeof a !== 'string') errors.push(`${at}: assessment.${d} must answer "${QUESTIONS[d]}"`);
+      else if (words(a) > 25) errors.push(`${at}: assessment.${d} is ${words(a)} words; keep it to 25`);
     }
-    if (escalated && !['cleared', 'concern'].includes(f.verdict)) errors.push(`${at}: verdict must be "cleared" or "concern"`);
-    if (escalated && f.verdict === 'concern' && !f.action) errors.push(`${at}: concern needs an "action"`);
+    if (isFlagged(f, thresholds) && !f.action) errors.push(`${at}: flagged (mean < ${thresholds?.flagBelow ?? 3} or a score <= ${thresholds?.dimensionFloor ?? 2}) so needs an "action"`);
+    if (escalated) {
+      if (!Array.isArray(f.deps)) errors.push(`${at}: "deps" must list the imports you read`);
+      if (!['cleared', 'concern'].includes(f.verdict)) errors.push(`${at}: verdict must be "cleared" or "concern"`);
+      if (f.verdict === 'concern' && !f.action) errors.push(`${at}: concern needs an "action"`);
+    }
   }
   return errors;
 }
@@ -409,11 +422,11 @@ function loadRun(root, runId) {
 }
 
 export function cmdValidate(root, runId) {
-  const { dir } = loadRun(root, runId);
+  const { dir, thresholds } = loadRun(root, runId);
   const rdir = path.join(dir, 'reviews');
   const problems = {};
   for (const f of fs.existsSync(rdir) ? fs.readdirSync(rdir).filter((x) => x.endsWith('.json')) : []) {
-    const errs = validateReview(readJson(path.join(rdir, f)), { escalated: f.endsWith('.escalated.json') });
+    const errs = validateReview(readJson(path.join(rdir, f)), { escalated: f.endsWith('.escalated.json'), thresholds });
     if (errs.length) problems[f] = errs;
   }
   return problems;
@@ -439,7 +452,7 @@ export function cmdEscalate(root, runId) {
 
 export function cmdReport(root, runId) {
   const { id, dir, selection, thresholds } = loadRun(root, runId);
-  const report = { runId: id, seed: selection.seed, createdAt: new Date().toISOString(), thresholds, areas: [], concerns: [], missing: [] };
+  const report = { runId: id, seed: selection.seed, createdAt: new Date().toISOString(), thresholds, areas: [], actions: [], missing: [] };
   for (const a of selection.areas) {
     const review = readJson(path.join(dir, 'reviews', `${a.slug}.json`));
     const escal = readJson(path.join(dir, 'reviews', `${a.slug}.escalated.json`));
@@ -447,47 +460,53 @@ export function cmdReport(root, runId) {
     const escBy = Object.fromEntries((escal?.files || []).map((f) => [f.path, f]));
     const files = review.files.map((f) => {
       const e = escBy[f.path];
+      const final = e || f;
       const flagged = isFlagged(f, thresholds);
-      const final = e ? e : f;
-      const status = !flagged ? 'ok' : !e ? 'flagged-unescalated' : e.verdict === 'cleared' && !isFlagged(e, thresholds) ? 'cleared' : 'concern';
-      return { path: f.path, purpose: f.purpose, how: f.how, outside: f.outside, scores: f.scores, score: fileScore(f), finalScore: fileScore(final), escalated: Boolean(e), deps: e?.deps || [], status, action: e?.action || null, notes: e?.notes || f.notes || '' };
+      const status = !flagged ? 'ok' : !e ? 'flagged' : e.verdict === 'cleared' && !isFlagged(e, thresholds) ? 'cleared' : 'concern';
+      return {
+        path: f.path, status,
+        scores: final.scores, assessment: final.assessment,
+        initialScore: fileScore(f), score: fileScore(final),
+        escalated: Boolean(e), deps: e?.deps || [],
+        action: status === 'ok' || status === 'cleared' ? null : final.action || f.action || null,
+      };
     });
-    const score = round(mean(files.map((f) => f.finalScore)));
-    const dims = Object.fromEntries(DIMENSIONS.map((d) => [d, round(mean(files.map((f) => f.scores[d])))]));
-    report.areas.push({ area: a.area, kind: a.kind, pool: a.pool, score, grade: grade(score), dims, files });
-    for (const f of files) if (f.status === 'concern' || f.status === 'flagged-unescalated') report.concerns.push({ area: a.area, path: f.path, score: f.finalScore, status: f.status, action: f.action || f.notes });
+    const score = round(mean(files.map((f) => f.score)));
+    report.areas.push({ area: a.area, kind: a.kind, pool: a.pool, score, grade: grade(score), files });
+    for (const f of files) if (f.action) report.actions.push({ area: a.area, path: f.path, score: f.score, status: f.status, action: f.action });
   }
-  const all = report.areas.flatMap((a) => a.files.map((f) => f.finalScore));
-  report.score = round(mean(all));
+  report.actions.sort((x, y) => x.score - y.score);
+  report.concerns = report.actions.filter((x) => x.status === 'concern' || x.status === 'flagged');
+  report.score = round(mean(report.areas.flatMap((a) => a.files.map((f) => f.score))));
   report.grade = grade(report.score);
   writeJson(path.join(dir, 'report.json'), report);
   fs.writeFileSync(path.join(dir, 'report.md'), renderMarkdown(report));
   return report;
 }
 
+const cell = (x) => String(x ?? '').replace(/\|/g, '/').replace(/\n/g, ' ');
+const STATUS = { ok: 'ok', cleared: 'cleared', concern: 'CONCERN', flagged: 'flagged' };
+
 export function renderMarkdown(r) {
-  const L = [];
-  L.push(`# Chaos Storm report: ${r.runId}`, '');
-  L.push(`Overall **${r.grade}** (${r.score}/5) across ${r.areas.length} areas. Seed \`${r.seed}\`. Concerns: **${r.concerns.length}**.`, '');
-  L.push('Scores (1-5): **purpose** what is it trying to do, **approach** how is it doing it, **focus** nothing outside its purpose, **reasoning** can it be reasoned with.', '');
-  if (r.concerns.length) {
-    L.push('## Concerns to action', '', '| Area | File | Score | Action |', '|---|---|---|---|');
-    for (const c of r.concerns) L.push(`| ${c.area} | \`${c.path}\` | ${c.score} | ${(c.action || '').replace(/\|/g, '/')}${c.status === 'flagged-unescalated' ? ' (not escalated)' : ''} |`);
-    L.push('');
-  }
-  L.push('## Areas', '', '| Area | Grade | Score | Purpose | Approach | Focus | Reasoning |', '|---|---|---|---|---|---|---|');
-  for (const a of r.areas) L.push(`| ${a.area} | ${a.grade} | ${a.score} | ${a.dims.purpose} | ${a.dims.approach} | ${a.dims.focus} | ${a.dims.reasoning} |`);
+  const L = [`# Chaos Storm · ${r.runId}`, ''];
+  L.push(`**${r.grade} (${r.score}/5)** overall · ${r.areas.length} areas · ${r.concerns.length} concerns · seed \`${r.seed}\``, '');
+  L.push('| Area | Grade | Score | Files |', '|---|:-:|:-:|:-:|');
+  for (const a of r.areas) L.push(`| ${a.area} | ${a.grade} | ${a.score} | ${a.files.length} |`);
   for (const a of r.areas) {
-    L.push('', `### ${a.area} (${a.kind}) ${a.grade}`, '');
+    L.push('', `## ${a.area} · ${a.grade} (${a.score})`);
     for (const f of a.files) {
-      const s = f.scores;
-      const tag = { ok: '', cleared: ' · cleared after dependency review', concern: ' · **CONCERN**', 'flagged-unescalated': ' · flagged, not escalated' }[f.status];
-      L.push(`- \`${f.path}\` **${f.finalScore}** [P${s.purpose} A${s.approach} F${s.focus} R${s.reasoning}]${tag}`);
-      L.push(`  - What: ${f.purpose}`, `  - How: ${f.how}`);
-      if (f.outside?.length) L.push(`  - Outside purpose: ${f.outside.join('; ')}`);
-      if (f.escalated) L.push(`  - Deps reviewed: ${f.deps.length ? f.deps.map((d) => `\`${d}\``).join(', ') : 'none resolved'}`);
-      if (f.action) L.push(`  - Action: ${f.action}`);
+      L.push('', `### \`${f.path}\` · ${f.score} · ${STATUS[f.status]}`, '', '| Question | Score | Assessment |', '|---|:-:|---|');
+      for (const d of DIMENSIONS) L.push(`| ${QUESTIONS[d]} | ${f.scores[d]} | ${cell(f.assessment?.[d])} |`);
+      if (f.escalated) {
+        const deps = f.deps.length ? f.deps.map((d) => `\`${d}\``).join(', ') : 'no local imports resolved';
+        L.push('', `Drilled into imports: ${deps} → ${f.status === 'cleared' ? 'cleared' : 'still a concern'} (${f.initialScore} → ${f.score})`);
+      } else if (f.status === 'flagged') L.push('', 'Flagged, not yet drilled into imports.');
+      if (f.action) L.push('', `**Action:** ${f.action}`);
     }
+  }
+  if (r.actions.length) {
+    L.push('', '## Remedial actions', '', '| # | File | Score | Status | Action |', '|:-:|---|:-:|---|---|');
+    r.actions.forEach((x, i) => L.push(`| ${i + 1} | \`${x.path}\` | ${x.score} | ${STATUS[x.status]} | ${cell(x.action)} |`));
   }
   if (r.missing.length) L.push('', `Missing reviews: ${r.missing.join(', ')}`);
   return L.join('\n') + '\n';
@@ -573,7 +592,7 @@ function main() {
       const r = cmdReport(root, opts.run);
       say(`report: ${DIR}/runs/${r.runId}/report.md | overall ${r.grade} (${r.score}) | concerns ${r.concerns.length}`);
       for (const a of r.areas) say(`  ${a.area}: ${a.grade} (${a.score})`);
-      for (const c of r.concerns) say(`  CONCERN ${c.path}: ${c.action || ''}`);
+      for (const c of r.actions) say(`  ${STATUS[c.status]} ${c.path} (${c.score}): ${c.action}`);
       if (r.missing.length) say(`  missing reviews: ${r.missing.join(', ')}`);
       break;
     }

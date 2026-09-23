@@ -9,7 +9,9 @@ Chaos Storming measures codebase health by chance, not by choice. Once per repo 
 3. What is it doing outside its core purpose?
 4. Can it be reasoned with?
 
-Each answer is scored 1 to 5. Weak files are escalated: they are re-reviewed alongside the files they import, one level deep. Files that are still weak become concerns with a concrete action. The report grades every area A to E.
+Each answer gets a one-line assessment and a score from 1 to 5. Weak files are escalated: they are re-reviewed alongside the files they import, one level deep. Files that are still weak become concerns with a concrete action.
+
+The report grades every area A to E, then gives each file a four-row table (question, score, assessment), a line saying whether it was drilled into its imports and with what result, and its remedial action if it has one. It closes with a single table of remedial actions, worst first.
 
 ## When to reach for it
 

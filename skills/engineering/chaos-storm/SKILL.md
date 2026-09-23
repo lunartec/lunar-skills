@@ -47,7 +47,7 @@ Validate again.
 
 ## 5. Report
 
-`CS report` writes `report.md` and `report.json` in the run folder. Relay its summary lines to the user: overall grade, grade per area, and each concern with its action. Point to `report.md` for detail. Do not paste the full report.
+`CS report` writes `report.md` and `report.json` in the run folder. Relay its summary lines to the user: overall grade, grade per area, and each remedial action. Point to `report.md` for the per-file tables. Do not paste the full report.
 
 ## Models
 
