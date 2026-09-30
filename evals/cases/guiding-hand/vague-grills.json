@@ -1,0 +1,17 @@
+{
+  "id": "gh-vague-grills",
+  "skill": "guiding-hand",
+  "description": "A vague goal must be grilled, not guessed: numbered questions with recommendations, and no guide rendered yet.",
+  "fixture": "mono",
+  "prompt": {
+    "claude": "/guiding-hand make checkout better",
+    "codex": "$guiding-hand make checkout better"
+  },
+  "timeoutSec": 400,
+  "assert": [
+    { "type": "asked", "match": "recommend" },
+    { "type": "gh.noGuide" },
+    { "type": "gh.noSourceEdits" },
+    { "type": "maxCostUSD", "value": 0.8, "soft": true }
+  ]
+}

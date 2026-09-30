@@ -2,14 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, tempDir } from './helpers.mjs';
+import { execFileSync } from 'node:child_process';
+import { ROOT, tempDir, fixtureRepo } from './helpers.mjs';
 import { check, gradeCase } from '../evals/lib/grade.mjs';
 import { parseTranscript, prepareWorkspace } from '../evals/lib/live.mjs';
 import { renderHtml, cheapShare } from '../evals/lib/html.mjs';
 import { loadCases, summarise } from '../evals/run.mjs';
 import { budget } from '../scripts/budget.mjs';
 
-const KNOWN = /^(file|chaos\.(areas|flagged|notFlagged|concern|escalated)|sn\.(ledger|signalCount|signal|notSignal|handoff|quickPass)|da\.(report|verdict|lens)|orchestratorDidNotRead|delegated|skillInvoked|maxCostUSD)$/;
+const KNOWN = /^(file|chaos\.(areas|flagged|notFlagged|concern|escalated)|sn\.(ledger|signalCount|signal|notSignal|handoff|quickPass)|da\.(report|verdict|lens)|gh\.(guide|maps|role|noGuide|noSourceEdits)|asked|orchestratorDidNotRead|delegated|skillInvoked|maxCostUSD)$/;
 const noTranscript = { raw: '', mainToolCalls: [], hasToolDetail: true, metrics: { byModel: {} } };
 
 test('every live case is well formed and points at real fixtures and skills', () => {
@@ -19,7 +20,7 @@ test('every live case is well formed and points at real fixtures and skills', ()
   for (const c of cases) {
     assert.ok(!ids.has(c.id), `duplicate id ${c.id}`); ids.add(c.id);
     assert.ok(fs.existsSync(path.join(ROOT, 'evals/fixtures', c.fixture)), `${c.id}: fixture`);
-    assert.ok(fs.existsSync(path.join(ROOT, 'skills')) && ['chaos-storm', 'signal-noise', 'devils-advocate'].includes(c.skill), `${c.id}: skill`);
+    assert.ok(fs.existsSync(path.join(ROOT, 'skills')) && ['chaos-storm', 'signal-noise', 'devils-advocate', 'guiding-hand'].includes(c.skill), `${c.id}: skill`);
     assert.ok(c.prompt.claude && c.prompt.codex, `${c.id}: prompt per agent`);
     if (c.branch) assert.ok(fs.existsSync(path.join(ROOT, 'evals/fixtures/overlays', c.branch.overlay)), `${c.id}: overlay`);
     for (const a of c.assert) assert.match(a.type, KNOWN, `${c.id}: unknown assertion ${a.type}`);
@@ -55,6 +56,29 @@ test('graders: signal-noise ledger assertions', () => {
   assert.equal(check({ type: 'sn.notSignal', match: 'competitor' }, ctx).pass, false);
   assert.equal(check({ type: 'sn.signalCount', min: 3, max: 5 }, ctx).pass, false);
   assert.equal(check({ type: 'sn.handoff' }, ctx).pass, false);
+});
+
+test('graders: guiding-hand assertions', () => {
+  const ws = fixtureRepo('mono');
+  execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base'], { cwd: ws });
+  fs.mkdirSync(path.join(ws, '.guiding-hand/eur'), { recursive: true });
+  const guide = { kind: 'feature', files: [{ path: 'packages/utils/src/money.ts', role: 'modify', why: 'formatter' }, { path: 'packages/utils/src/money.test.ts', role: 'test', why: 'cover EUR' }], watch: [] };
+  fs.writeFileSync(path.join(ws, '.guiding-hand/eur/guide.json'), JSON.stringify(guide));
+  const ctx = { ws, transcript: { ...noTranscript, finalText: 'Before I map it:\n1. Which currency? Recommended: EUR' } };
+  assert.equal(check({ type: 'gh.guide' }, ctx).pass, false, 'not rendered yet');
+  assert.equal(check({ type: 'gh.noGuide' }, ctx).pass, true);
+  fs.writeFileSync(path.join(ws, '.guiding-hand/eur/guide.md'), '# guide');
+  assert.equal(check({ type: 'gh.guide' }, ctx).pass, true);
+  assert.equal(check({ type: 'gh.noGuide' }, ctx).pass, false);
+  assert.equal(check({ type: 'gh.maps', path: 'packages/utils/src/money.ts', roles: ['modify'] }, ctx).pass, true);
+  assert.equal(check({ type: 'gh.maps', path: 'packages/utils/src/money.ts', roles: ['check'] }, ctx).pass, false);
+  assert.equal(check({ type: 'gh.maps', path: 'apps/web/src/router.ts' }, ctx).pass, false);
+  assert.equal(check({ type: 'gh.role', role: 'test' }, ctx).pass, true);
+  assert.equal(check({ type: 'gh.noSourceEdits' }, ctx).pass, true, 'guide files do not count');
+  fs.appendFileSync(path.join(ws, 'packages/utils/src/money.ts'), '// edit');
+  assert.match(check({ type: 'gh.noSourceEdits' }, ctx).detail, /money\.ts/);
+  assert.equal(check({ type: 'asked', match: 'currency' }, ctx).pass, true);
+  assert.equal(check({ type: 'asked' }, { ws, transcript: { ...noTranscript, finalText: 'Here is your guide.' } }).pass, false);
 });
 
 test('graders: soft failures warn, hard failures fail, n/a is neutral', () => {

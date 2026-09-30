@@ -6,7 +6,7 @@
     {
       "name": "lunar-skills",
       "source": "./",
-      "description": "chaos-storm, signal-noise and devils-advocate: lean, script-backed skills that route work to the right model.",
+      "description": "chaos-storm, signal-noise, devils-advocate and guiding-hand: lean, script-backed skills that route work to the right model.",
       "category": "engineering",
       "keywords": ["engineering", "code-health", "code-review", "focus"]
     }

@@ -50,6 +50,7 @@ Requirements: Node 18+ and git. `gh` only for PR targets in devils-advocate.
 
 - **[signal-noise](./skills/productivity/signal-noise/SKILL.md)**: cuts a plan, orchestration, diff or draft to the 3 to 5 things that make real progress now, and hands the rest to a cheap subagent for a quick pass you review later.
 - **[devils-advocate](./skills/engineering/devils-advocate/SKILL.md)**: argues the other side of a file, folder, branch, PR, plan or review. Challenges over-engineering, duplication, invented patterns, wrong premises and hidden risk, with evidence and a steelman for every point.
+- **[guiding-hand](./skills/engineering/guiding-hand/SKILL.md)**: guides a human engineer through a bug fix or change without writing it for them. Maps every file the work touches and why, gives lean repo-specific coding guidance and gotchas, and grills for the goal first when it is unclear.
 
 Human-facing docs: [docs/](./docs).
 
@@ -103,13 +104,28 @@ Steve Jobs' signal-to-noise rule applied to agent work. **Signal**: the 3 to 5 n
 
 A deliberately opposing voice for complicated or high-stakes changes and for PR review. A script builds an evidence brief (diff size, abstraction density, new dirs and dependencies, similar code that already exists); a **fresh** subagent that has not seen the main agent's reasoning then argues the other side through six lenses: over-engineering, duplication, new pattern, premise, risk, review gap. Every challenge needs evidence, the strongest case for the current approach, a question for the human and an alternative action. Output is a verdict (`proceed`, `adjust`, `rethink`) and a report you can post to the PR with `gh pr comment`.
 
+## guiding-hand
+
+For when a human writes the code. The agent is the architect, the engineer is the editor.
+
+```
+frame ─▶ bug | feature | change (one-sentence diffs are answered inline)
+scan ─▶ term search + one hop of imports/importers + nearest tests + test/lint commands
+scout ─▶ fast subagent picks the real files and roles, lists decisions the code cannot answer
+grill ─▶ numbered rounds of up to 4 questions, each with a recommendation; goal played back
+guide ─▶ guide.json validated (paths, symbols, no placeholders, no full implementations) ─▶ guide.md
+check ─▶ after the work: planned files untouched, changes outside the map
+```
+
+The guide's file map gives every file a role: `modify`, `create`, `test`, `check` (should not change, but the change can break it) or `reference` (existing pattern to copy). `render` also lists importers of modified files that the map left out, so the blast radius is not missed.
+
 ## Models
 
 Skills name a tier, not a vendor. Override per repo where the skill has config (`chaos-storm` reads `models` from `.chaos-storm/map.json`).
 
 | Tier | Used for | Claude Code | Codex |
 |---|---|---|---|
-| fast | mapping, noise quick pass | `haiku` | `gpt-6-luna` |
+| fast | mapping, noise quick pass, guiding-hand scout | `haiku` | `gpt-6-luna` |
 | review | chaos-storm file reviews | `sonnet` | `gpt-6-sol`, low effort |
 | strong | devils-advocate challenger | `opus` (or `sonnet`) | `gpt-6-sol`, high effort |
 

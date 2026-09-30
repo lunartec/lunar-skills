@@ -2,10 +2,10 @@
 
 Skills live in bucket folders under `skills/`:
 
-- `engineering/`: code work (chaos-storm, devils-advocate)
+- `engineering/`: code work (chaos-storm, devils-advocate, guiding-hand)
 - `productivity/`: workflow tools (signal-noise)
 
-Every skill folder has `SKILL.md`, `agents/openai.yaml` (Codex metadata), and, where it needs one, `scripts/<skill-name>.mjs` plus prompts it hands to subagents (`reviewer.md`, `advocate.md`, ...).
+Every skill folder has `SKILL.md`, `agents/openai.yaml` (Codex metadata), and, where it needs one, `scripts/<skill-name>.mjs` plus prompts it hands to subagents (`reviewer.md`, `advocate.md`, `scout.md`, ...).
 
 Rules, all checked by `npm test` (`tests/repo.test.mjs`):
 

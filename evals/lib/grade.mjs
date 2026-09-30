@@ -1,6 +1,7 @@
 // Graders: turn a finished workspace + transcript into pass/fail assertions.
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
 
@@ -40,6 +41,14 @@ function daChallenge(ws) {
   const f = hits.map((h) => ({ h, t: fs.statSync(h).mtimeMs })).sort((a, b) => b.t - a.t)[0].h;
   const c = readJson(f);
   return c ? { ...c, challenges: c.challenges || [], __file: f } : null;
+}
+
+function ghGuide(ws) {
+  const hits = globFiles(ws, '.guiding-hand/*/guide.json');
+  if (!hits.length) return null;
+  const f = hits.map((h) => ({ h, t: fs.statSync(h).mtimeMs })).sort((a, b) => b.t - a.t)[0].h;
+  const g = readJson(f);
+  return g ? { ...g, files: g.files || [], __file: f } : null;
 }
 
 const fileEntry = (report, p) => report?.areas.flatMap((a) => a.files).find((f) => f.path === p);
@@ -122,6 +131,40 @@ export function check(a, ctx) {
       const good = hits.find((x) => !re || re.test([...(x.evidence || []), x.claim].join(' ')));
       return { pass: Boolean(good), detail: good ? `${good.confidence}/${good.consequence}: ${good.claim}` : hits.length ? `lens present but evidence missed /${a.evidence}/` : `no ${a.lens} challenge (lenses: ${c.challenges.map((x) => x.lens).join(', ')})` };
     }
+    case 'gh.guide': {
+      const g = ghGuide(ws);
+      if (!g) return { pass: false, detail: 'no guide.json' };
+      const md = fs.existsSync(path.join(path.dirname(g.__file), 'guide.md'));
+      return { pass: md, detail: `${md ? 'guide.md rendered' : 'guide.json not rendered'}: ${g.kind}, ${g.files.length} files, ${(g.watch || []).length} watch` };
+    }
+    case 'gh.maps': {
+      const g = ghGuide(ws);
+      if (!g) return { pass: false, detail: 'no guide.json' };
+      const f = g.files.find((x) => x.path === a.path);
+      if (!f) return { pass: false, detail: `${a.path} not in map (${g.files.map((x) => `${x.path}:${x.role}`).join(', ')})` };
+      const ok = !a.roles || a.roles.includes(f.role);
+      return { pass: ok, detail: `${f.role}: ${f.why}` };
+    }
+    case 'gh.role': {
+      const n = ghGuide(ws)?.files.filter((x) => x.role === a.role).length ?? 0;
+      return { pass: n >= (a.min ?? 1), detail: `${n} ${a.role} entries` };
+    }
+    case 'gh.noGuide': {
+      const hits = globFiles(ws, '.guiding-hand/*/guide.md');
+      return { pass: hits.length === 0, detail: hits.length ? 'guide rendered before the goal was clear' : 'no guide yet' };
+    }
+    case 'gh.noSourceEdits': {
+      let out = '';
+      try { out = execFileSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: ws, encoding: 'utf8' }); } catch { return { pass: null, detail: 'git status failed' }; }
+      const edits = out.split('\n').map((l) => l.slice(3)).filter((f) => f && !/^\.(guiding-hand|claude|agents|codex)\//.test(f));
+      return { pass: edits.length === 0, detail: edits.length ? `edited: ${edits.join(', ')}` : 'source untouched' };
+    }
+    case 'asked': {
+      const text = t.finalText || '';
+      const re = new RegExp(a.match || '\\?', 'i');
+      const numbered = /(^|\n)\s*(\*\*)?(Q?1[.):]|❓)/.test(text);
+      return { pass: re.test(text) && numbered, detail: text ? text.replace(/\s+/g, ' ').slice(0, 140) : 'no final text' };
+    }
     case 'orchestratorDidNotRead': {
       if (!t.hasToolDetail) return { pass: null, detail: 'n/a for this agent' };
       const offenders = [];
@@ -180,6 +223,12 @@ export function describe(a) {
     case 'da.report': return 'challenge rendered to report.md (max 5)';
     case 'da.verdict': return `verdict is ${a.oneOf.join(' or ')}`;
     case 'da.lens': return `raises ${a.lens}${a.evidence ? ` citing /${a.evidence}/` : ''}`;
+    case 'gh.guide': return 'guide.json rendered to guide.md';
+    case 'gh.maps': return `maps ${a.path}${a.roles ? ` as ${a.roles.join('|')}` : ''}`;
+    case 'gh.role': return `at least ${a.min ?? 1} ${a.role} entr${(a.min ?? 1) === 1 ? 'y' : 'ies'}`;
+    case 'gh.noGuide': return 'no guide before the goal is clear';
+    case 'gh.noSourceEdits': return 'did not edit source files';
+    case 'asked': return `asked numbered questions${a.match ? ` about /${a.match}/` : ''}`;
     case 'orchestratorDidNotRead': return 'orchestrator never read sampled sources';
     case 'delegated': return 'work delegated to subagents';
     case 'skillInvoked': return `skill "${a.name}" triggered`;

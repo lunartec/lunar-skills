@@ -2,7 +2,7 @@
   "name": "lunar-skills",
   "version": "0.1.0",
   "private": true,
-  "description": "Lean, script-backed agent skills for Claude Code and Codex: chaos-storm, signal-noise, devils-advocate.",
+  "description": "Lean, script-backed agent skills for Claude Code and Codex: chaos-storm, signal-noise, devils-advocate, guiding-hand.",
   "type": "module",
   "license": "MIT",
   "author": "Gareth Parker (https://github.com/lunartec)",

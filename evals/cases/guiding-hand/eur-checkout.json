@@ -1,0 +1,23 @@
+{
+  "id": "gh-eur-checkout",
+  "skill": "guiding-hand",
+  "description": "Implicit trigger: the user wants to add EUR to checkout themselves. The map must name the formatter and its caller as modify, include a test, and no source file may be edited.",
+  "fixture": "mono",
+  "prompt": {
+    "claude": "I want to add EUR support to the checkout total myself. Don't write the code: show me which files I'd need to touch and what to watch out for. I'm not around to answer questions, so go with your recommended answers.",
+    "codex": "$guiding-hand I want to add EUR support to the checkout total myself. Don't write the code: show me which files I'd need to touch and what to watch out for. I'm not around to answer questions, so go with your recommended answers."
+  },
+  "timeoutSec": 600,
+  "assert": [
+    { "type": "skillInvoked", "name": "guiding-hand" },
+    { "type": "file", "glob": ".guiding-hand/*/scan.json" },
+    { "type": "gh.guide" },
+    { "type": "gh.maps", "path": "packages/utils/src/money.ts", "roles": ["modify"] },
+    { "type": "gh.maps", "path": "apps/web/src/checkout.ts", "roles": ["modify"] },
+    { "type": "gh.role", "role": "test" },
+    { "type": "gh.maps", "path": "apps/web/src/router.ts", "roles": ["check", "modify"], "soft": true },
+    { "type": "gh.noSourceEdits" },
+    { "type": "delegated", "soft": true },
+    { "type": "maxCostUSD", "value": 1.5, "soft": true }
+  ]
+}

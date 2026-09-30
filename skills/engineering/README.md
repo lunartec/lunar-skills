@@ -7,3 +7,4 @@
 ## Model-invoked
 
 - **[devils-advocate](./devils-advocate/SKILL.md)**: argue the other side of a file, folder, branch, PR, plan or review before committing to it.
+- **[guiding-hand](./guiding-hand/SKILL.md)**: guide a human engineer through a fix or change: file map, lean coding guidance, gotchas; grills for the goal first when it is unclear.
